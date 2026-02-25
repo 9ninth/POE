@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PantherOnlyEats</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            background-color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow-x: hidden;
+        }
+        .card-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        /* Navigation & Filter Transitions */
+        #side-menu, #filter-pane {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #side-menu { transform: translateX(-100%); }
+        #filter-pane { transform: translateY(-100%); }
+        #side-menu.open { transform: translateX(0); }
+        #filter-pane.open { transform: translateY(0); }
+        
+        #overlay {
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            opacity: 0;
+        }
+        #overlay.open {
+            pointer-events: auto;
+            opacity: 1;
+        }
+        .filter-chip.active {
+            background-color: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+        .view-tab.active {
+            border-bottom: 3px solid #ef4444;
+            color: #ef4444;
+            font-weight: bold;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Event Grid Item Styling */
+        .event-grid-card {
+            aspect-ratio: 3/4;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            position: relative;
+            padding: 0.75rem;
+            border-radius: 1.25rem;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        .event-grid-card:active {
+            transform: scale(0.96);
+        }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen">
+
+    <!-- Global Overlay -->
+    <div id="overlay" onclick="closeAllPanels()" class="fixed inset-0 bg-black/40 z-40"></div>
+    
+    <!-- Sidebar Menu -->
+    <div id="side-menu" class="fixed top-0 left-0 bottom-0 w-72 bg-white z-50 shadow-2xl p-6">
+        <div class="flex justify-between items-center mb-10">
+            <h2 class="text-2xl font-bold text-gray-900">Menu</h2>
+            <button onclick="closeAllPanels()" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        <nav class="space-y-4">
+            <a href="#" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-red-50 text-gray-700 transition-colors group">
+                <i data-lucide="settings" class="w-6 h-6 group-hover:text-red-500"></i>
+                <span class="font-semibold text-lg">Preferences</span>
+            </a>
+            <a href="#" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-red-50 text-gray-700 transition-colors group">
+                <i data-lucide="calendar" class="w-6 h-6 group-hover:text-red-500"></i>
+                <span class="font-semibold text-lg">Calendars</span>
+            </a>
+            <div class="pt-6 mt-6 border-t border-gray-100">
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 px-4">Support</p>
+                <a href="#" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 text-gray-700 transition-colors">
+                    <i data-lucide="help-circle" class="w-6 h-6"></i>
+                    <span class="font-semibold">Help Center</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Filter Pane -->
+    <div id="filter-pane" class="fixed top-0 left-0 right-0 bg-white z-50 shadow-2xl p-6 max-w-md mx-auto rounded-b-[2rem]">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-900">Filters</h2>
+            <button onclick="closeAllPanels()" class="p-2 hover:bg-gray-100 rounded-full">
+                <i data-lucide="chevron-up" class="w-6 h-6"></i>
+            </button>
+        </div>
+        
+        <div class="space-y-6">
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Timeline</label>
+                <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                    <button class="filter-chip active border border-gray-200 px-5 py-2 rounded-full text-sm whitespace-nowrap" onclick="toggleChip(this)">Upcoming</button>
+                    <button class="filter-chip border border-gray-200 px-5 py-2 rounded-full text-sm whitespace-nowrap" onclick="toggleChip(this)">Today</button>
+                    <button class="filter-chip border border-gray-200 px-5 py-2 rounded-full text-sm whitespace-nowrap" onclick="toggleChip(this)">Past</button>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Dining Type</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button class="filter-chip border border-gray-200 p-3 rounded-xl text-sm flex items-center gap-2" onclick="toggleChip(this)"><i data-lucide="coffee" class="w-4 h-4"></i> Cafe</button>
+                    <button class="filter-chip border border-gray-200 p-3 rounded-xl text-sm flex items-center gap-2" onclick="toggleChip(this)"><i data-lucide="utensils" class="w-4 h-4"></i> Restaurant</button>
+                </div>
+            </div>
+
+            <button onclick="closeAllPanels()" class="w-full bg-red-500 text-white font-bold py-4 rounded-2xl shadow-xl shadow-red-200 active:scale-95 transition-all">
+                Apply Filters
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="relative w-full max-w-md bg-white min-h-screen flex flex-col shadow-2xl">
+        
+        <!-- App Header -->
+        <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 pt-4 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <button onclick="toggleMenu()" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                    <i data-lucide="menu" class="w-6 h-6 text-gray-800"></i>
+                </button>
+                <span class="font-black text-xl tracking-tighter text-red-600 uppercase italic">PantherOnlyEats</span>
+                <button onclick="toggleFilter()" class="p-2 bg-gray-50 border border-gray-100 rounded-xl transition-colors">
+                    <i data-lucide="sliders-horizontal" class="w-5 h-5 text-gray-600"></i>
+                </button>
+            </div>
+            
+            <!-- View Switcher -->
+            <div class="flex border-b border-gray-100">
+                <button onclick="switchView('hero')" id="tab-hero" class="view-tab flex-1 py-3 text-xs uppercase tracking-widest">Hero</button>
+                <button onclick="switchView('details')" id="tab-details" class="view-tab flex-1 py-3 text-xs uppercase tracking-widest">Details</button>
+                <button onclick="switchView('grid')" id="tab-grid" class="view-tab active flex-1 py-3 text-xs uppercase tracking-widest">Grid</button>
+            </div>
+        </header>
+
+        <!-- Dynamic Content Area -->
+        <main class="flex-1 p-4 overflow-y-auto">
+            
+            <!-- VIEW 1: HERO (Main Card) -->
+            <div id="view-hero" class="hidden space-y-6 pt-2">
+                <div class="bg-white border-2 border-red-500 rounded-[2.5rem] overflow-hidden card-shadow">
+                    <div class="p-8 space-y-4">
+                        <div class="w-12 h-1 bg-red-500 rounded-full mb-2"></div>
+                        <h1 class="text-4xl font-black text-gray-900 leading-none uppercase">Chef's Table<br>Experience</h1>
+                        <div class="space-y-2 pt-2 text-gray-500 font-medium">
+                            <p class="flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4"></i> Sat, 7:00 PM</p>
+                            <p class="flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4"></i> Panther Plaza</p>
+                        </div>
+                    </div>
+                    <div class="flex border-t-2 border-red-500 h-20">
+                        <button onclick="handleRSVP(this, true)" class="flex-1 bg-red-500 text-white text-xl font-black uppercase">RSVP YES</button>
+                        <button onclick="handleRSVP(this, false)" class="flex-1 bg-white text-red-500 text-xl font-black uppercase">NO</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 2: DETAILS (List Cards) -->
+            <div id="view-details" class="hidden space-y-4 pt-2">
+                <div class="bg-white border-2 border-gray-900 rounded-3xl overflow-hidden card-shadow">
+                    <div class="p-6 text-center">
+                        <h2 class="text-2xl font-bold text-gray-900">Italian Night</h2>
+                        <p class="text-sm text-gray-500 mt-2">Tonight • 8:00 PM • Campus South</p>
+                    </div>
+                    <div class="flex border-t-2 border-gray-100 divide-x-2 divide-gray-100 h-16">
+                        <button class="flex-1 flex items-center justify-center text-gray-300 hover:text-green-500 transition-colors"><i data-lucide="check" class="w-8 h-8"></i></button>
+                        <button class="flex-1 flex items-center justify-center text-gray-300 hover:text-red-500 transition-colors"><i data-lucide="x" class="w-8 h-8"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 3: GRID (Discovery) -->
+            <div id="view-grid" class="grid grid-cols-2 gap-4">
+                
+                <!-- Card 1 -->
+                <div class="event-grid-card bg-red-50 border border-red-100">
+                    <button class="absolute top-3 right-3 p-1.5 bg-white rounded-full shadow-sm hover:bg-red-500 hover:text-white transition-colors">
+                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <div class="space-y-0.5">
+                        <h3 class="font-bold text-gray-900 text-sm leading-tight">Steakhouse</h3>
+                        <p class="text-[10px] text-gray-500"><i data-lucide="map-pin" class="inline w-2.5 h-2.5"></i> Main St</p>
+                        <p class="text-[10px] font-bold text-red-600 mt-1">Oct 24 • 7 PM</p>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="event-grid-card bg-gray-900 text-white">
+                    <button class="absolute top-3 right-3 p-1.5 bg-white/10 rounded-full hover:bg-white hover:text-gray-900 transition-colors">
+                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <div class="space-y-0.5">
+                        <h3 class="font-bold text-sm leading-tight">Burger Bar</h3>
+                        <p class="text-[10px] text-gray-400"><i data-lucide="map-pin" class="inline w-2.5 h-2.5"></i> Food Court</p>
+                        <p class="text-[10px] font-bold text-red-400 mt-1">Oct 25 • 12 PM</p>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="event-grid-card border border-gray-200 bg-white">
+                    <button class="absolute top-3 right-3 p-1.5 bg-gray-100 rounded-full hover:bg-red-500 hover:text-white transition-colors">
+                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <div class="space-y-0.5">
+                        <h3 class="font-bold text-gray-900 text-sm leading-tight">Sushi Pop-up</h3>
+                        <p class="text-[10px] text-gray-500"><i data-lucide="map-pin" class="inline w-2.5 h-2.5"></i> Terrace</p>
+                        <p class="text-[10px] font-bold text-gray-600 mt-1">Oct 26 • 6 PM</p>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="event-grid-card bg-gray-50 border border-gray-100">
+                    <button class="absolute top-3 right-3 p-1.5 bg-white rounded-full hover:bg-red-500 hover:text-white transition-colors">
+                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <div class="space-y-0.5">
+                        <h3 class="font-bold text-gray-900 text-sm leading-tight">Taco Stand</h3>
+                        <p class="text-[10px] text-gray-500"><i data-lucide="map-pin" class="inline w-2.5 h-2.5"></i> Quad</p>
+                        <p class="text-[10px] font-bold text-gray-600 mt-1">Oct 27 • 1 PM</p>
+                    </div>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="event-grid-card bg-red-600 text-white">
+                    <button class="absolute top-3 right-3 p-1.5 bg-white/20 rounded-full">
+                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <div class="space-y-0.5">
+                        <h3 class="font-bold text-sm leading-tight">BBQ Roast</h3>
+                        <p class="text-[10px] text-red-100"><i data-lucide="map-pin" class="inline w-2.5 h-2.5"></i> North Park</p>
+                        <p class="text-[10px] font-bold text-white mt-1">Oct 28 • 5 PM</p>
+                    </div>
+                </div>
+
+                <!-- Card 6 (Placeholder/Empty) -->
+                <div class="event-grid-card border-2 border-dashed border-gray-200 bg-gray-50/50">
+                    <div class="m-auto text-center">
+                        <i data-lucide="plus" class="w-6 h-6 text-gray-300 mx-auto"></i>
+                        <p class="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">Add New</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <footer class="p-4 bg-gray-50/50 border-t border-gray-100 text-center">
+            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">PantherOnlyEats Discovery</span>
+        </footer>
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        function toggleMenu() {
+            closeAllPanels();
+            document.getElementById('side-menu').classList.add('open');
+            document.getElementById('overlay').classList.add('open');
+        }
+
+        function toggleFilter() {
+            closeAllPanels();
+            document.getElementById('filter-pane').classList.add('open');
+            document.getElementById('overlay').classList.add('open');
+        }
+
+        function closeAllPanels() {
+            document.getElementById('side-menu').classList.remove('open');
+            document.getElementById('filter-pane').classList.remove('open');
+            document.getElementById('overlay').classList.remove('open');
+        }
+
+        function switchView(viewId) {
+            document.getElementById('view-hero').classList.add('hidden');
+            document.getElementById('view-details').classList.add('hidden');
+            document.getElementById('view-grid').classList.add('hidden');
+            document.getElementById('view-' + viewId).classList.remove('hidden');
+
+            document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + viewId).classList.add('active');
+        }
+
+        function toggleChip(btn) {
+            btn.classList.toggle('active');
+        }
+
+        function handleRSVP(btn, isYes) {
+            const parent = btn.parentElement;
+            const buttons = parent.querySelectorAll('button');
+            if(isYes) {
+                buttons[0].className = "flex-1 bg-green-500 text-white font-black text-lg transition-all";
+                buttons[1].className = "flex-1 bg-white text-gray-200 font-black text-lg";
+                buttons[0].innerText = "GOING";
+            } else {
+                buttons[1].className = "flex-1 bg-gray-800 text-white font-black text-lg transition-all";
+                buttons[0].className = "flex-1 bg-white text-gray-200 font-black text-lg";
+                buttons[1].innerText = "DECLINED";
+            }
+        }
+    </script>
+</body>
+</html>
+
