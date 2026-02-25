@@ -6,6 +6,22 @@
     <title>PantherOnlyEats</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gsu: {
+                            blue: '#0039A6',
+                            light: '#1A5FC9',
+                            pale: '#E8F0FE',
+                            dark: '#002970',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         body {
             background-color: #f1f5f9;
@@ -23,7 +39,7 @@
         #filter-pane { transform: translateY(-100%); }
         #side-menu.open { transform: translateX(0); }
         #filter-pane.open { transform: translateY(0); }
-        
+
         #overlay {
             transition: opacity 0.3s ease;
             pointer-events: none;
@@ -34,18 +50,18 @@
             opacity: 1;
         }
         .filter-chip.active {
-            background-color: #ef4444;
+            background-color: #0039A6;
             color: white;
-            border-color: #ef4444;
+            border-color: #0039A6;
         }
         .view-tab.active {
-            border-bottom: 3px solid #ef4444;
-            color: #ef4444;
+            border-bottom: 3px solid #0039A6;
+            color: #0039A6;
             font-weight: bold;
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
+
         /* Event Grid Item Styling */
         .event-grid-card {
             aspect-ratio: 3/4;
@@ -62,13 +78,32 @@
         .event-grid-card:active {
             transform: scale(0.96);
         }
+
+        /* Calendar mini styles */
+        .cal-day { width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; border-radius: 9999px; font-size: 0.75rem; cursor: pointer; transition: all 0.15s; }
+        .cal-day:hover { background-color: #E8F0FE; }
+        .cal-day.has-event { background-color: #E8F0FE; color: #0039A6; font-weight: 700; }
+        .cal-day.selected { background-color: #0039A6; color: white; font-weight: 700; }
+        .cal-day.today { border: 2px solid #0039A6; }
+
+        /* Loading skeleton */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 0.5rem;
+        }
     </style>
 </head>
 <body class="flex justify-center min-h-screen">
 
     <!-- Global Overlay -->
     <div id="overlay" onclick="closeAllPanels()" class="fixed inset-0 bg-black/40 z-40"></div>
-    
+
     <!-- Sidebar Menu -->
     <div id="side-menu" class="fixed top-0 left-0 bottom-0 w-72 bg-white z-50 shadow-2xl p-6">
         <div class="flex justify-between items-center mb-10">
@@ -78,12 +113,12 @@
             </button>
         </div>
         <nav class="space-y-4">
-            <a href="#" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-red-50 text-gray-700 transition-colors group">
-                <i data-lucide="settings" class="w-6 h-6 group-hover:text-red-500"></i>
+            <a href="#" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-blue-50 text-gray-700 transition-colors group">
+                <i data-lucide="settings" class="w-6 h-6 group-hover:text-gsu-blue"></i>
                 <span class="font-semibold text-lg">Preferences</span>
             </a>
-            <a href="#" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-red-50 text-gray-700 transition-colors group">
-                <i data-lucide="calendar" class="w-6 h-6 group-hover:text-red-500"></i>
+            <a href="#" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-blue-50 text-gray-700 transition-colors group">
+                <i data-lucide="calendar" class="w-6 h-6 group-hover:text-gsu-blue"></i>
                 <span class="font-semibold text-lg">Calendars</span>
             </a>
             <div class="pt-6 mt-6 border-t border-gray-100">
@@ -104,7 +139,7 @@
                 <i data-lucide="chevron-up" class="w-6 h-6"></i>
             </button>
         </div>
-        
+
         <div class="space-y-6">
             <div>
                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Timeline</label>
@@ -123,7 +158,7 @@
                 </div>
             </div>
 
-            <button onclick="closeAllPanels()" class="w-full bg-red-500 text-white font-bold py-4 rounded-2xl shadow-xl shadow-red-200 active:scale-95 transition-all">
+            <button onclick="closeAllPanels()" class="w-full bg-gsu-blue text-white font-bold py-4 rounded-2xl shadow-xl shadow-blue-200 active:scale-95 transition-all">
                 Apply Filters
             </button>
         </div>
@@ -131,19 +166,19 @@
 
     <!-- Main Container -->
     <div class="relative w-full max-w-md bg-white min-h-screen flex flex-col shadow-2xl">
-        
+
         <!-- App Header -->
         <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 pt-4 shadow-sm">
             <div class="flex items-center justify-between mb-4">
                 <button onclick="toggleMenu()" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
                     <i data-lucide="menu" class="w-6 h-6 text-gray-800"></i>
                 </button>
-                <span class="font-black text-xl tracking-tighter text-red-600 uppercase italic">PantherOnlyEats</span>
+                <span class="font-black text-xl tracking-tighter text-gsu-blue uppercase italic">PantherOnlyEats</span>
                 <button onclick="toggleFilter()" class="p-2 bg-gray-50 border border-gray-100 rounded-xl transition-colors">
                     <i data-lucide="sliders-horizontal" class="w-5 h-5 text-gray-600"></i>
                 </button>
             </div>
-            
+
             <!-- View Switcher -->
             <div class="flex border-b border-gray-100">
                 <button onclick="switchView('hero')" id="tab-hero" class="view-tab flex-1 py-3 text-xs uppercase tracking-widest">Hero</button>
@@ -153,121 +188,414 @@
         </header>
 
         <!-- Dynamic Content Area -->
-        <main class="flex-1 p-4 overflow-y-auto">
-            
-            <!-- VIEW 1: HERO (Main Card) -->
-            <div id="view-hero" class="hidden space-y-6 pt-2">
-                <div class="bg-white border-2 border-red-500 rounded-[2.5rem] overflow-hidden card-shadow">
-                    <div class="p-8 space-y-4">
-                        <div class="w-12 h-1 bg-red-500 rounded-full mb-2"></div>
-                        <h1 class="text-4xl font-black text-gray-900 leading-none uppercase">Chef's Table<br>Experience</h1>
-                        <div class="space-y-2 pt-2 text-gray-500 font-medium">
-                            <p class="flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4"></i> Sat, 7:00 PM</p>
-                            <p class="flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4"></i> Panther Plaza</p>
-                        </div>
-                    </div>
-                    <div class="flex border-t-2 border-red-500 h-20">
-                        <button onclick="handleRSVP(this, true)" class="flex-1 bg-red-500 text-white text-xl font-black uppercase">RSVP YES</button>
-                        <button onclick="handleRSVP(this, false)" class="flex-1 bg-white text-red-500 text-xl font-black uppercase">NO</button>
-                    </div>
+        <main class="flex-1 overflow-y-auto">
+
+            <!-- Mini Calendar (shared across all views) -->
+            <div id="calendar-strip" class="px-4 pt-4 pb-2">
+                <div class="flex items-center justify-between mb-3">
+                    <button onclick="calNavMonth(-1)" class="p-1 hover:bg-gray-100 rounded-full"><i data-lucide="chevron-left" class="w-4 h-4 text-gray-500"></i></button>
+                    <span id="cal-month-label" class="text-sm font-bold text-gray-800"></span>
+                    <button onclick="calNavMonth(1)" class="p-1 hover:bg-gray-100 rounded-full"><i data-lucide="chevron-right" class="w-4 h-4 text-gray-500"></i></button>
                 </div>
+                <div class="grid grid-cols-7 gap-1 text-center mb-1">
+                    <span class="text-[10px] font-bold text-gray-400">SU</span>
+                    <span class="text-[10px] font-bold text-gray-400">MO</span>
+                    <span class="text-[10px] font-bold text-gray-400">TU</span>
+                    <span class="text-[10px] font-bold text-gray-400">WE</span>
+                    <span class="text-[10px] font-bold text-gray-400">TH</span>
+                    <span class="text-[10px] font-bold text-gray-400">FR</span>
+                    <span class="text-[10px] font-bold text-gray-400">SA</span>
+                </div>
+                <div id="cal-days" class="grid grid-cols-7 gap-1 place-items-center"></div>
             </div>
 
-            <!-- VIEW 2: DETAILS (List Cards) -->
-            <div id="view-details" class="hidden space-y-4 pt-2">
-                <div class="bg-white border-2 border-gray-900 rounded-3xl overflow-hidden card-shadow">
-                    <div class="p-6 text-center">
-                        <h2 class="text-2xl font-bold text-gray-900">Italian Night</h2>
-                        <p class="text-sm text-gray-500 mt-2">Tonight • 8:00 PM • Campus South</p>
-                    </div>
-                    <div class="flex border-t-2 border-gray-100 divide-x-2 divide-gray-100 h-16">
-                        <button class="flex-1 flex items-center justify-center text-gray-300 hover:text-green-500 transition-colors"><i data-lucide="check" class="w-8 h-8"></i></button>
-                        <button class="flex-1 flex items-center justify-center text-gray-300 hover:text-red-500 transition-colors"><i data-lucide="x" class="w-8 h-8"></i></button>
-                    </div>
-                </div>
+            <!-- Loading State -->
+            <div id="loading-state" class="p-4 space-y-4 hidden">
+                <div class="skeleton h-40 w-full"></div>
+                <div class="skeleton h-24 w-full"></div>
+                <div class="skeleton h-24 w-full"></div>
             </div>
 
-            <!-- VIEW 3: GRID (Discovery) -->
-            <div id="view-grid" class="grid grid-cols-2 gap-4">
-                
-                <!-- Card 1 -->
-                <div class="event-grid-card bg-red-50 border border-red-100">
-                    <button class="absolute top-3 right-3 p-1.5 bg-white rounded-full shadow-sm hover:bg-red-500 hover:text-white transition-colors">
-                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
-                    </button>
-                    <div class="space-y-0.5">
-                        <h3 class="font-bold text-gray-900 text-sm leading-tight">Steakhouse</h3>
-                        <p class="text-[10px] text-gray-500"><i data-lucide="map-pin" class="inline w-2.5 h-2.5"></i> Main St</p>
-                        <p class="text-[10px] font-bold text-red-600 mt-1">Oct 24 • 7 PM</p>
-                    </div>
-                </div>
+            <!-- Error State -->
+            <div id="error-state" class="p-8 text-center hidden">
+                <i data-lucide="cloud-off" class="w-12 h-12 text-gray-300 mx-auto mb-3"></i>
+                <p class="text-sm font-bold text-gray-500">Failed to load events</p>
+                <button onclick="GCSPipeline.fetchEvents()" class="mt-3 text-sm font-bold text-gsu-blue underline">Retry</button>
+            </div>
 
-                <!-- Card 2 -->
-                <div class="event-grid-card bg-gray-900 text-white">
-                    <button class="absolute top-3 right-3 p-1.5 bg-white/10 rounded-full hover:bg-white hover:text-gray-900 transition-colors">
-                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
-                    </button>
-                    <div class="space-y-0.5">
-                        <h3 class="font-bold text-sm leading-tight">Burger Bar</h3>
-                        <p class="text-[10px] text-gray-400"><i data-lucide="map-pin" class="inline w-2.5 h-2.5"></i> Food Court</p>
-                        <p class="text-[10px] font-bold text-red-400 mt-1">Oct 25 • 12 PM</p>
-                    </div>
-                </div>
+            <div class="p-4">
+                <!-- VIEW 1: HERO (Main Card) -->
+                <div id="view-hero" class="hidden space-y-6 pt-2"></div>
 
-                <!-- Card 3 -->
-                <div class="event-grid-card border border-gray-200 bg-white">
-                    <button class="absolute top-3 right-3 p-1.5 bg-gray-100 rounded-full hover:bg-red-500 hover:text-white transition-colors">
-                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
-                    </button>
-                    <div class="space-y-0.5">
-                        <h3 class="font-bold text-gray-900 text-sm leading-tight">Sushi Pop-up</h3>
-                        <p class="text-[10px] text-gray-500"><i data-lucide="map-pin" class="inline w-2.5 h-2.5"></i> Terrace</p>
-                        <p class="text-[10px] font-bold text-gray-600 mt-1">Oct 26 • 6 PM</p>
-                    </div>
-                </div>
+                <!-- VIEW 2: DETAILS (List Cards) -->
+                <div id="view-details" class="hidden space-y-4 pt-2"></div>
 
-                <!-- Card 4 -->
-                <div class="event-grid-card bg-gray-50 border border-gray-100">
-                    <button class="absolute top-3 right-3 p-1.5 bg-white rounded-full hover:bg-red-500 hover:text-white transition-colors">
-                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
-                    </button>
-                    <div class="space-y-0.5">
-                        <h3 class="font-bold text-gray-900 text-sm leading-tight">Taco Stand</h3>
-                        <p class="text-[10px] text-gray-500"><i data-lucide="map-pin" class="inline w-2.5 h-2.5"></i> Quad</p>
-                        <p class="text-[10px] font-bold text-gray-600 mt-1">Oct 27 • 1 PM</p>
-                    </div>
-                </div>
-
-                <!-- Card 5 -->
-                <div class="event-grid-card bg-red-600 text-white">
-                    <button class="absolute top-3 right-3 p-1.5 bg-white/20 rounded-full">
-                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
-                    </button>
-                    <div class="space-y-0.5">
-                        <h3 class="font-bold text-sm leading-tight">BBQ Roast</h3>
-                        <p class="text-[10px] text-red-100"><i data-lucide="map-pin" class="inline w-2.5 h-2.5"></i> North Park</p>
-                        <p class="text-[10px] font-bold text-white mt-1">Oct 28 • 5 PM</p>
-                    </div>
-                </div>
-
-                <!-- Card 6 (Placeholder/Empty) -->
-                <div class="event-grid-card border-2 border-dashed border-gray-200 bg-gray-50/50">
-                    <div class="m-auto text-center">
-                        <i data-lucide="plus" class="w-6 h-6 text-gray-300 mx-auto"></i>
-                        <p class="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">Add New</p>
-                    </div>
-                </div>
+                <!-- VIEW 3: GRID (Discovery) -->
+                <div id="view-grid" class="grid grid-cols-2 gap-4"></div>
             </div>
 
         </main>
 
         <footer class="p-4 bg-gray-50/50 border-t border-gray-100 text-center">
-            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">PantherOnlyEats Discovery</span>
+            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">PantherOnlyEats Discovery &mdash; Georgia State University</span>
         </footer>
     </div>
 
     <script>
-        // Initialize Icons
+        // =====================================================================
+        // Google Cloud Storage Data Pipeline
+        // =====================================================================
+        // Architecture:
+        //   Browser  -->  GCSPipeline.fetchEvents()
+        //            -->  fetch() to GCS public bucket URL (JSON blob)
+        //            -->  Parse & normalize into EventStore
+        //            -->  Render all 3 views from EventStore
+        //
+        // For production: replace MOCK_MODE=false and set GCS_BUCKET_URL to
+        // your actual bucket endpoint, e.g.:
+        //   https://storage.googleapis.com/<bucket>/events.json
+        // =====================================================================
+
+        const GCSPipeline = (() => {
+            // -- Configuration --------------------------------------------------
+            const CONFIG = {
+                MOCK_MODE: true,
+                GCS_BUCKET_URL: 'https://storage.googleapis.com/pantheronlyeats-data/events.json',
+                CACHE_TTL_MS: 5 * 60 * 1000, // 5 minutes
+            };
+
+            // -- In-memory cache ------------------------------------------------
+            let _cache = { data: null, timestamp: 0 };
+
+            // -- Mock data (simulates what the GCS JSON blob would return) -------
+            const MOCK_EVENTS = [
+                {
+                    id: 'evt-001',
+                    title: "Chef's Table Experience",
+                    type: 'restaurant',
+                    location: 'Panther Plaza',
+                    date: '2026-03-07',
+                    time: '7:00 PM',
+                    color: 'blue',
+                    description: 'A premium five-course tasting menu prepared by GSU culinary arts students.',
+                    rsvpCount: 42,
+                },
+                {
+                    id: 'evt-002',
+                    title: 'Italian Night',
+                    type: 'restaurant',
+                    location: 'Campus South Dining',
+                    date: '2026-03-10',
+                    time: '8:00 PM',
+                    color: 'dark',
+                    description: 'Authentic pasta, risotto, and tiramisu from local Italian chefs.',
+                    rsvpCount: 38,
+                },
+                {
+                    id: 'evt-003',
+                    title: 'Steakhouse Pop-up',
+                    type: 'restaurant',
+                    location: 'Main St Pavilion',
+                    date: '2026-03-12',
+                    time: '7:00 PM',
+                    color: 'pale',
+                    description: 'Prime cuts grilled to order with craft sides.',
+                    rsvpCount: 55,
+                },
+                {
+                    id: 'evt-004',
+                    title: 'Burger Bar',
+                    type: 'cafe',
+                    location: 'Student Food Court',
+                    date: '2026-03-15',
+                    time: '12:00 PM',
+                    color: 'dark',
+                    description: 'Build-your-own gourmet burgers with 20+ toppings.',
+                    rsvpCount: 67,
+                },
+                {
+                    id: 'evt-005',
+                    title: 'Sushi Pop-up',
+                    type: 'restaurant',
+                    location: 'Library Terrace',
+                    date: '2026-03-18',
+                    time: '6:00 PM',
+                    color: 'white',
+                    description: 'Fresh sushi rolls and bento boxes.',
+                    rsvpCount: 30,
+                },
+                {
+                    id: 'evt-006',
+                    title: 'Taco Stand',
+                    type: 'cafe',
+                    location: 'University Quad',
+                    date: '2026-03-20',
+                    time: '1:00 PM',
+                    color: 'pale',
+                    description: 'Street-style tacos with house-made salsas.',
+                    rsvpCount: 48,
+                },
+                {
+                    id: 'evt-007',
+                    title: 'BBQ Roast',
+                    type: 'restaurant',
+                    location: 'North Park',
+                    date: '2026-03-22',
+                    time: '5:00 PM',
+                    color: 'blue',
+                    description: 'Slow-smoked ribs, brisket, and pulled pork.',
+                    rsvpCount: 73,
+                },
+                {
+                    id: 'evt-008',
+                    title: 'Panther Brunch',
+                    type: 'cafe',
+                    location: 'Aderhold Hall Cafe',
+                    date: '2026-03-25',
+                    time: '10:00 AM',
+                    color: 'white',
+                    description: 'Waffles, mimosas (non-alc), and acai bowls.',
+                    rsvpCount: 22,
+                },
+            ];
+
+            // -- Fetch events (mock or real) ------------------------------------
+            async function fetchEvents() {
+                showLoading(true);
+                showError(false);
+
+                try {
+                    let events;
+
+                    if (CONFIG.MOCK_MODE) {
+                        // Simulate network latency
+                        await new Promise(r => setTimeout(r, 400));
+                        events = structuredClone(MOCK_EVENTS);
+                    } else {
+                        // Check cache
+                        const now = Date.now();
+                        if (_cache.data && (now - _cache.timestamp) < CONFIG.CACHE_TTL_MS) {
+                            events = _cache.data;
+                        } else {
+                            const res = await fetch(CONFIG.GCS_BUCKET_URL);
+                            if (!res.ok) throw new Error(`GCS responded ${res.status}`);
+                            events = await res.json();
+                            _cache = { data: events, timestamp: now };
+                        }
+                    }
+
+                    EventStore.setEvents(events);
+                    renderAllViews();
+                    renderCalendar();
+                } catch (err) {
+                    console.error('[GCSPipeline] Fetch failed:', err);
+                    showError(true);
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            function showLoading(on) {
+                document.getElementById('loading-state').classList.toggle('hidden', !on);
+            }
+            function showError(on) {
+                document.getElementById('error-state').classList.toggle('hidden', !on);
+            }
+
+            return { fetchEvents, CONFIG };
+        })();
+
+        // =====================================================================
+        // Event Store — single source of truth for all views
+        // =====================================================================
+        const EventStore = (() => {
+            let _events = [];
+            let _rsvps = {}; // id -> 'yes' | 'no' | null
+
+            function setEvents(events) { _events = events; }
+            function getEvents() { return _events; }
+            function getEventDates() { return _events.map(e => e.date); }
+
+            function setRSVP(id, value) { _rsvps[id] = value; }
+            function getRSVP(id) { return _rsvps[id] || null; }
+
+            return { setEvents, getEvents, getEventDates, setRSVP, getRSVP };
+        })();
+
+        // =====================================================================
+        // Renderers — each view reads from EventStore
+        // =====================================================================
+
+        const COLOR_MAP = {
+            blue:  { card: 'bg-gsu-blue text-white',       info: 'bg-white/20',        date: 'text-blue-100',  pin: 'text-blue-200', border: 'border-gsu-blue' },
+            dark:  { card: 'bg-gray-900 text-white',        info: 'bg-white/10',        date: 'text-gray-400',  pin: 'text-gray-400', border: 'border-gray-900' },
+            pale:  { card: 'bg-blue-50 border border-blue-100', info: 'bg-white',       date: 'text-gsu-blue',  pin: 'text-gray-500', border: 'border-blue-200' },
+            white: { card: 'border border-gray-200 bg-white',   info: 'bg-gray-100',    date: 'text-gray-600',  pin: 'text-gray-500', border: 'border-gray-200' },
+        };
+
+        function fmtDate(dateStr) {
+            const d = new Date(dateStr + 'T00:00:00');
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        // -- HERO VIEW --
+        function renderHeroView(events) {
+            const container = document.getElementById('view-hero');
+            container.innerHTML = events.map(ev => {
+                const c = COLOR_MAP[ev.color] || COLOR_MAP.white;
+                const rsvp = EventStore.getRSVP(ev.id);
+                const yesClass = rsvp === 'yes' ? 'bg-green-500 text-white' : 'bg-gsu-blue text-white';
+                const noClass  = rsvp === 'no'  ? 'bg-gray-800 text-white' : 'bg-white text-gsu-blue';
+                const yesText  = rsvp === 'yes' ? 'GOING' : 'RSVP YES';
+                const noText   = rsvp === 'no'  ? 'DECLINED' : 'NO';
+                return `
+                <div class="bg-white border-2 ${c.border} rounded-[2.5rem] overflow-hidden card-shadow">
+                    <div class="p-8 space-y-4">
+                        <div class="w-12 h-1 bg-gsu-blue rounded-full mb-2"></div>
+                        <h1 class="text-3xl font-black text-gray-900 leading-none uppercase">${ev.title}</h1>
+                        <p class="text-sm text-gray-500 leading-relaxed">${ev.description}</p>
+                        <div class="space-y-2 pt-2 text-gray-500 font-medium">
+                            <p class="flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4"></i> ${fmtDate(ev.date)} &bull; ${ev.time}</p>
+                            <p class="flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4"></i> ${ev.location}</p>
+                            <p class="flex items-center gap-2"><i data-lucide="users" class="w-4 h-4"></i> ${ev.rsvpCount} attending</p>
+                        </div>
+                    </div>
+                    <div class="flex border-t-2 ${c.border} h-16">
+                        <button onclick="handleRSVP('${ev.id}', true)" class="flex-1 ${yesClass} text-lg font-black uppercase transition-all">${yesText}</button>
+                        <button onclick="handleRSVP('${ev.id}', false)" class="flex-1 ${noClass} text-lg font-black uppercase transition-all">${noText}</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // -- DETAILS VIEW --
+        function renderDetailsView(events) {
+            const container = document.getElementById('view-details');
+            container.innerHTML = events.map(ev => {
+                const c = COLOR_MAP[ev.color] || COLOR_MAP.white;
+                const rsvp = EventStore.getRSVP(ev.id);
+                const checkColor = rsvp === 'yes' ? 'text-green-500' : 'text-gray-300 hover:text-green-500';
+                const xColor     = rsvp === 'no'  ? 'text-red-500'   : 'text-gray-300 hover:text-red-500';
+                return `
+                <div class="bg-white border-2 ${c.border} rounded-3xl overflow-hidden card-shadow">
+                    <div class="p-5">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <h2 class="text-xl font-bold text-gray-900">${ev.title}</h2>
+                                <p class="text-sm text-gray-500 mt-1">${fmtDate(ev.date)} &bull; ${ev.time} &bull; ${ev.location}</p>
+                                <p class="text-xs text-gray-400 mt-2 leading-relaxed">${ev.description}</p>
+                            </div>
+                            <span class="ml-3 shrink-0 inline-flex items-center gap-1 text-xs font-bold text-gsu-blue bg-blue-50 px-2 py-1 rounded-full">
+                                <i data-lucide="users" class="w-3 h-3"></i> ${ev.rsvpCount}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex border-t-2 border-gray-100 divide-x-2 divide-gray-100 h-14">
+                        <button onclick="handleRSVP('${ev.id}', true)" class="flex-1 flex items-center justify-center ${checkColor} transition-colors"><i data-lucide="check" class="w-7 h-7"></i></button>
+                        <button onclick="handleRSVP('${ev.id}', false)" class="flex-1 flex items-center justify-center ${xColor} transition-colors"><i data-lucide="x" class="w-7 h-7"></i></button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // -- GRID VIEW --
+        function renderGridView(events) {
+            const container = document.getElementById('view-grid');
+            const cards = events.map(ev => {
+                const c = COLOR_MAP[ev.color] || COLOR_MAP.white;
+                const infoBtn = ev.color === 'dark' || ev.color === 'blue'
+                    ? 'bg-white/20 rounded-full hover:bg-white hover:text-gray-900'
+                    : 'bg-gray-100 rounded-full hover:bg-gsu-blue hover:text-white';
+                const dateColor = c.date;
+                const pinColor  = c.pin;
+                return `
+                <div class="event-grid-card ${c.card}">
+                    <button class="absolute top-3 right-3 p-1.5 ${infoBtn} transition-colors">
+                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <div class="space-y-0.5">
+                        <h3 class="font-bold text-sm leading-tight">${ev.title}</h3>
+                        <p class="text-[10px] ${pinColor}"><i data-lucide="map-pin" class="inline w-2.5 h-2.5"></i> ${ev.location}</p>
+                        <p class="text-[10px] font-bold ${dateColor} mt-1">${fmtDate(ev.date)} &bull; ${ev.time}</p>
+                    </div>
+                </div>`;
+            });
+
+            // Add "Add New" placeholder
+            cards.push(`
+                <div class="event-grid-card border-2 border-dashed border-gray-200 bg-gray-50/50">
+                    <div class="m-auto text-center">
+                        <i data-lucide="plus" class="w-6 h-6 text-gray-300 mx-auto"></i>
+                        <p class="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">Add New</p>
+                    </div>
+                </div>`);
+
+            container.innerHTML = cards.join('');
+        }
+
+        function renderAllViews() {
+            const events = EventStore.getEvents();
+            renderHeroView(events);
+            renderDetailsView(events);
+            renderGridView(events);
+            lucide.createIcons();
+        }
+
+        // =====================================================================
+        // Mini Calendar
+        // =====================================================================
+        let calYear = 2026, calMonth = 2; // March 2026 (0-indexed)
+        const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+        function renderCalendar() {
+            const label = document.getElementById('cal-month-label');
+            label.textContent = `${MONTH_NAMES[calMonth]} ${calYear}`;
+
+            const daysContainer = document.getElementById('cal-days');
+            const firstDay = new Date(calYear, calMonth, 1).getDay();
+            const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+            const today = new Date();
+            const eventDates = EventStore.getEventDates();
+
+            let html = '';
+            // Blank cells before first day
+            for (let i = 0; i < firstDay; i++) html += '<span></span>';
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const isToday = today.getFullYear() === calYear && today.getMonth() === calMonth && today.getDate() === d;
+                const hasEvent = eventDates.includes(dateStr);
+                let cls = 'cal-day';
+                if (isToday) cls += ' today';
+                if (hasEvent) cls += ' has-event';
+                html += `<span class="${cls}" onclick="selectCalDay('${dateStr}', this)">${d}</span>`;
+            }
+            daysContainer.innerHTML = html;
+        }
+
+        function calNavMonth(delta) {
+            calMonth += delta;
+            if (calMonth > 11) { calMonth = 0; calYear++; }
+            if (calMonth < 0) { calMonth = 11; calYear--; }
+            renderCalendar();
+        }
+
+        function selectCalDay(dateStr, el) {
+            document.querySelectorAll('.cal-day.selected').forEach(d => d.classList.remove('selected'));
+            el.classList.add('selected');
+            // Filter views to only show events on this date (or show all if clicking selected again)
+            const events = EventStore.getEvents().filter(e => e.date === dateStr);
+            if (events.length > 0) {
+                renderHeroView(events);
+                renderDetailsView(events);
+                renderGridView(events);
+                lucide.createIcons();
+            }
+        }
+
+        // =====================================================================
+        // UI Handlers
+        // =====================================================================
         lucide.createIcons();
 
         function toggleMenu() {
@@ -296,26 +624,24 @@
 
             document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
             document.getElementById('tab-' + viewId).classList.add('active');
+
+            // Re-render to pick up any RSVP changes
+            renderAllViews();
         }
 
         function toggleChip(btn) {
             btn.classList.toggle('active');
         }
 
-        function handleRSVP(btn, isYes) {
-            const parent = btn.parentElement;
-            const buttons = parent.querySelectorAll('button');
-            if(isYes) {
-                buttons[0].className = "flex-1 bg-green-500 text-white font-black text-lg transition-all";
-                buttons[1].className = "flex-1 bg-white text-gray-200 font-black text-lg";
-                buttons[0].innerText = "GOING";
-            } else {
-                buttons[1].className = "flex-1 bg-gray-800 text-white font-black text-lg transition-all";
-                buttons[0].className = "flex-1 bg-white text-gray-200 font-black text-lg";
-                buttons[1].innerText = "DECLINED";
-            }
+        function handleRSVP(eventId, isYes) {
+            EventStore.setRSVP(eventId, isYes ? 'yes' : 'no');
+            renderAllViews();
         }
+
+        // =====================================================================
+        // Boot
+        // =====================================================================
+        GCSPipeline.fetchEvents();
     </script>
 </body>
 </html>
-
