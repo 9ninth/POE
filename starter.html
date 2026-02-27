@@ -6,316 +6,752 @@
     <title>PantherOnlyEats</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gsu: {
+                            blue: '#0039A6',
+                            light: '#1A5FC9',
+                            pale: '#E8F0FE',
+                            dark: '#002970',
+                            red: '#CC0000',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        * { box-sizing: border-box; }
         body {
             background-color: #f1f5f9;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            overflow-x: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
-        .card-shadow {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        /* Navigation & Filter Transitions */
-        #side-menu, #filter-pane {
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        #side-menu { transform: translateX(-100%); }
-        #filter-pane { transform: translateY(-100%); }
-        #side-menu.open { transform: translateX(0); }
-        #filter-pane.open { transform: translateY(0); }
-        
-        #overlay {
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-            opacity: 0;
-        }
-        #overlay.open {
-            pointer-events: auto;
-            opacity: 1;
-        }
-        .filter-chip.active {
-            background-color: #ef4444;
-            color: white;
-            border-color: #ef4444;
-        }
-        .view-tab.active {
-            border-bottom: 3px solid #ef4444;
-            color: #ef4444;
-            font-weight: bold;
-        }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* Event Grid Item Styling */
-        .event-grid-card {
-            aspect-ratio: 3/4;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            position: relative;
-            padding: 0.75rem;
-            border-radius: 1.25rem;
-            overflow: hidden;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-        }
-        .event-grid-card:active {
-            transform: scale(0.96);
-        }
+
+        /* View tab */
+        .view-tab.active { border-bottom: 3px solid #0039A6; color: #0039A6; font-weight: 700; }
+
+        /* Cards */
+        .event-card { transition: transform 0.2s cubic-bezier(.22,.68,0,1.1), box-shadow 0.2s ease; }
+        .event-card:hover { transform: translateY(-4px) scale(1.015); box-shadow: 0 12px 32px -8px rgba(0,57,166,0.18), 0 4px 12px -4px rgba(0,0,0,0.06); }
+        .event-card:active { transform: scale(0.97); }
+        .glass-overlay { backdrop-filter: blur(16px) saturate(1.6); -webkit-backdrop-filter: blur(16px) saturate(1.6); background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.25) 60%, transparent 100%); }
+        .featured-hero { transition: transform 0.3s cubic-bezier(.22,.68,0,1.1), box-shadow 0.3s ease; }
+        .featured-hero:hover { transform: scale(1.02); box-shadow: 0 20px 48px -12px rgba(0,57,166,0.25); }
+
+        /* Filter chip */
+        .filter-chip { transition: all 0.25s cubic-bezier(.22,.68,0,1.1); cursor: pointer; user-select: none; }
+        .filter-chip:hover { transform: scale(1.04); }
+        .filter-chip.active { background-color: #CC0000; color: white; border-color: #CC0000; box-shadow: 0 4px 14px -2px rgba(204,0,0,0.35); }
+
+        /* FREE FOOD badge */
+        .free-food-badge { background: #CC0000; box-shadow: 0 2px 12px rgba(204,0,0,0.5); animation: badge-glow 2s ease-in-out infinite alternate; }
+        @keyframes badge-glow { 0% { box-shadow: 0 2px 12px rgba(204,0,0,0.4); } 100% { box-shadow: 0 4px 20px rgba(204,0,0,0.65); } }
+
+        /* Bento grid */
+        .bento-grid { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: minmax(120px, 1fr); gap: 12px; }
+        .bento-grid .bento-hero { grid-column: span 2; grid-row: span 2; }
+        @media (max-width: 480px) { .bento-grid { grid-template-columns: repeat(2, 1fr); } .bento-grid .bento-hero { grid-column: span 2; grid-row: span 2; } }
+
+        /* Clamp */
+        .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+        /* Pulse */
+        @keyframes pulse-live { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.7; } }
+        .pulse-dot { animation: pulse-live 1.5s ease-in-out infinite; }
+
+        /* Fade-in stagger */
+        @keyframes fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fade-up 0.4s ease-out both; }
+        .stagger > * { animation: fade-up 0.35s ease-out both; }
+        .stagger > *:nth-child(1) { animation-delay: 0ms; }
+        .stagger > *:nth-child(2) { animation-delay: 50ms; }
+        .stagger > *:nth-child(3) { animation-delay: 100ms; }
+        .stagger > *:nth-child(4) { animation-delay: 150ms; }
+        .stagger > *:nth-child(5) { animation-delay: 200ms; }
+        .stagger > *:nth-child(6) { animation-delay: 250ms; }
+        .stagger > *:nth-child(7) { animation-delay: 300ms; }
+        .stagger > *:nth-child(8) { animation-delay: 350ms; }
+        .stagger > *:nth-child(9) { animation-delay: 400ms; }
+        .stagger > *:nth-child(10) { animation-delay: 450ms; }
+        .stagger > *:nth-child(n+11) { animation-delay: 500ms; }
+
+        /* ---------- Hamburger menu drawer ---------- */
+        .drawer-overlay { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }
+        .drawer-panel { transition: transform 0.3s cubic-bezier(.22,.68,0,1.1); }
+        .drawer-panel.closed { transform: translateX(-100%); }
+        .drawer-nav-item { transition: background 0.15s ease; }
+        .drawer-nav-item:hover { background: #E8F0FE; }
+        .drawer-nav-item.active { background: #E8F0FE; color: #0039A6; font-weight: 700; }
+
+        /* ---------- Filter bottom sheet ---------- */
+        .sheet-overlay { background: rgba(0,0,0,0.35); backdrop-filter: blur(4px); }
+        .sheet-panel { transition: transform 0.3s cubic-bezier(.22,.68,0,1.1); border-radius: 20px 20px 0 0; }
+        .sheet-panel.closed { transform: translateY(100%); }
+
+        /* ---------- Calendar ---------- */
+        .cal-day { transition: all 0.15s ease; }
+        .cal-day:hover { background: #E8F0FE; }
+        .cal-day.selected { background: #0039A6; color: white; }
+        .cal-day.has-events { position: relative; }
+        .cal-day.has-events::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: #CC0000; }
+        .cal-day.selected.has-events::after { background: white; }
+        .cal-day.today { border: 2px solid #0039A6; }
     </style>
 </head>
 <body class="flex justify-center min-h-screen">
 
-    <!-- Global Overlay -->
-    <div id="overlay" onclick="closeAllPanels()" class="fixed inset-0 bg-black/40 z-40"></div>
-    
-    <!-- Sidebar Menu -->
-    <div id="side-menu" class="fixed top-0 left-0 bottom-0 w-72 bg-white z-50 shadow-2xl p-6">
-        <div class="flex justify-between items-center mb-10">
-            <h2 class="text-2xl font-bold text-gray-900">Menu</h2>
-            <button onclick="closeAllPanels()" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-        </div>
-        <nav class="space-y-4">
-            <a href="#" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-red-50 text-gray-700 transition-colors group">
-                <i data-lucide="settings" class="w-6 h-6 group-hover:text-red-500"></i>
-                <span class="font-semibold text-lg">Preferences</span>
-            </a>
-            <a href="#" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-red-50 text-gray-700 transition-colors group">
-                <i data-lucide="calendar" class="w-6 h-6 group-hover:text-red-500"></i>
-                <span class="font-semibold text-lg">Calendars</span>
-            </a>
-            <div class="pt-6 mt-6 border-t border-gray-100">
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 px-4">Support</p>
-                <a href="#" class="flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 text-gray-700 transition-colors">
-                    <i data-lucide="help-circle" class="w-6 h-6"></i>
-                    <span class="font-semibold">Help Center</span>
-                </a>
-            </div>
-        </nav>
-    </div>
+    <!-- ===================== MAIN CONTAINER ===================== -->
+    <div id="app" class="relative w-full max-w-md bg-white min-h-screen flex flex-col shadow-2xl overflow-hidden">
 
-    <!-- Filter Pane -->
-    <div id="filter-pane" class="fixed top-0 left-0 right-0 bg-white z-50 shadow-2xl p-6 max-w-md mx-auto rounded-b-[2rem]">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold text-gray-900">Filters</h2>
-            <button onclick="closeAllPanels()" class="p-2 hover:bg-gray-100 rounded-full">
-                <i data-lucide="chevron-up" class="w-6 h-6"></i>
-            </button>
-        </div>
-        
-        <div class="space-y-6">
-            <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Timeline</label>
-                <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                    <button class="filter-chip active border border-gray-200 px-5 py-2 rounded-full text-sm whitespace-nowrap" onclick="toggleChip(this)">Upcoming</button>
-                    <button class="filter-chip border border-gray-200 px-5 py-2 rounded-full text-sm whitespace-nowrap" onclick="toggleChip(this)">Today</button>
-                    <button class="filter-chip border border-gray-200 px-5 py-2 rounded-full text-sm whitespace-nowrap" onclick="toggleChip(this)">Past</button>
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Dining Type</label>
-                <div class="grid grid-cols-2 gap-2">
-                    <button class="filter-chip border border-gray-200 p-3 rounded-xl text-sm flex items-center gap-2" onclick="toggleChip(this)"><i data-lucide="coffee" class="w-4 h-4"></i> Cafe</button>
-                    <button class="filter-chip border border-gray-200 p-3 rounded-xl text-sm flex items-center gap-2" onclick="toggleChip(this)"><i data-lucide="utensils" class="w-4 h-4"></i> Restaurant</button>
-                </div>
-            </div>
-
-            <button onclick="closeAllPanels()" class="w-full bg-red-500 text-white font-bold py-4 rounded-2xl shadow-xl shadow-red-200 active:scale-95 transition-all">
-                Apply Filters
-            </button>
-        </div>
-    </div>
-
-    <!-- Main Container -->
-    <div class="relative w-full max-w-md bg-white min-h-screen flex flex-col shadow-2xl">
-        
-        <!-- App Header -->
-        <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 pt-4 shadow-sm">
-            <div class="flex items-center justify-between mb-4">
-                <button onclick="toggleMenu()" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                    <i data-lucide="menu" class="w-6 h-6 text-gray-800"></i>
+        <!-- ===================== HEADER ===================== -->
+        <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-lg border-b border-gray-100 px-4 pt-4 pb-0 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+                <!-- Hamburger -->
+                <button onclick="toggleDrawer()" class="p-1.5 -ml-1.5 rounded-lg hover:bg-gray-100 transition">
+                    <i data-lucide="menu" class="w-5 h-5 text-gray-700"></i>
                 </button>
-                <span class="font-black text-xl tracking-tighter text-red-600 uppercase italic">PantherOnlyEats</span>
-                <button onclick="toggleFilter()" class="p-2 bg-gray-50 border border-gray-100 rounded-xl transition-colors">
-                    <i data-lucide="sliders-horizontal" class="w-5 h-5 text-gray-600"></i>
+                <div class="text-center flex-1">
+                    <h1 class="font-black text-lg tracking-tight text-gsu-blue uppercase leading-tight">PantherOnlyEats</h1>
+                    <p class="text-[10px] text-gray-400 font-medium">Free food on campus</p>
+                </div>
+                <!-- Filter button -->
+                <button onclick="toggleFilterSheet()" id="filter-btn" class="relative p-1.5 -mr-1.5 rounded-lg hover:bg-gray-100 transition">
+                    <i data-lucide="sliders-horizontal" class="w-5 h-5 text-gray-700"></i>
+                    <span id="filter-badge" class="hidden absolute -top-0.5 -right-0.5 w-4 h-4 bg-gsu-red text-white text-[8px] font-bold rounded-full flex items-center justify-center">0</span>
                 </button>
             </div>
-            
             <!-- View Switcher -->
-            <div class="flex border-b border-gray-100">
-                <button onclick="switchView('hero')" id="tab-hero" class="view-tab flex-1 py-3 text-xs uppercase tracking-widest">Hero</button>
-                <button onclick="switchView('details')" id="tab-details" class="view-tab flex-1 py-3 text-xs uppercase tracking-widest">Details</button>
-                <button onclick="switchView('grid')" id="tab-grid" class="view-tab active flex-1 py-3 text-xs uppercase tracking-widest">Grid</button>
+            <div class="flex border-b border-gray-100 -mx-4 px-4">
+                <button onclick="switchView('grid')" id="tab-grid" class="view-tab active flex-1 py-2.5 text-[11px] uppercase tracking-widest text-gray-400 font-semibold">Grid</button>
+                <button onclick="switchView('tab')" id="tab-tab" class="view-tab flex-1 py-2.5 text-[11px] uppercase tracking-widest text-gray-400 font-semibold">List</button>
             </div>
         </header>
 
-        <!-- Dynamic Content Area -->
-        <main class="flex-1 p-4 overflow-y-auto">
-            
-            <!-- VIEW 1: HERO (Main Card) -->
-            <div id="view-hero" class="hidden space-y-6 pt-2">
-                <div class="bg-white border-2 border-red-500 rounded-[2.5rem] overflow-hidden card-shadow">
-                    <div class="p-8 space-y-4">
-                        <div class="w-12 h-1 bg-red-500 rounded-full mb-2"></div>
-                        <h1 class="text-4xl font-black text-gray-900 leading-none uppercase">Chef's Table<br>Experience</h1>
-                        <div class="space-y-2 pt-2 text-gray-500 font-medium">
-                            <p class="flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4"></i> Sat, 7:00 PM</p>
-                            <p class="flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4"></i> Panther Plaza</p>
-                        </div>
-                    </div>
-                    <div class="flex border-t-2 border-red-500 h-20">
-                        <button onclick="handleRSVP(this, true)" class="flex-1 bg-red-500 text-white text-xl font-black uppercase">RSVP YES</button>
-                        <button onclick="handleRSVP(this, false)" class="flex-1 bg-white text-red-500 text-xl font-black uppercase">NO</button>
-                    </div>
-                </div>
+        <!-- ===================== ACTIVE FILTERS BAR ===================== -->
+        <div id="active-filters-bar" class="hidden px-4 py-2 bg-gsu-pale/50 border-b border-gray-100 flex items-center gap-2 overflow-x-auto">
+            <!-- active filter pills injected by JS -->
+        </div>
+
+        <!-- ===================== CONTENT ===================== -->
+        <main class="flex-1 overflow-y-auto">
+            <div id="empty-state" class="hidden p-16 text-center">
+                <i data-lucide="calendar-x" class="w-14 h-14 text-gray-200 mx-auto mb-4"></i>
+                <p class="text-sm font-bold text-gray-400">No events found</p>
+                <p class="text-xs text-gray-400 mt-1.5">Try adjusting your filters</p>
             </div>
-
-            <!-- VIEW 2: DETAILS (List Cards) -->
-            <div id="view-details" class="hidden space-y-4 pt-2">
-                <div class="bg-white border-2 border-gray-900 rounded-3xl overflow-hidden card-shadow">
-                    <div class="p-6 text-center">
-                        <h2 class="text-2xl font-bold text-gray-900">Italian Night</h2>
-                        <p class="text-sm text-gray-500 mt-2">Tonight • 8:00 PM • Campus South</p>
-                    </div>
-                    <div class="flex border-t-2 border-gray-100 divide-x-2 divide-gray-100 h-16">
-                        <button class="flex-1 flex items-center justify-center text-gray-300 hover:text-green-500 transition-colors"><i data-lucide="check" class="w-8 h-8"></i></button>
-                        <button class="flex-1 flex items-center justify-center text-gray-300 hover:text-red-500 transition-colors"><i data-lucide="x" class="w-8 h-8"></i></button>
-                    </div>
-                </div>
+            <div class="p-4">
+                <div id="view-grid"></div>
+                <div id="view-tab" class="hidden space-y-3"></div>
             </div>
-
-            <!-- VIEW 3: GRID (Discovery) -->
-            <div id="view-grid" class="grid grid-cols-2 gap-4">
-                
-                <!-- Card 1 -->
-                <div class="event-grid-card bg-red-50 border border-red-100">
-                    <button class="absolute top-3 right-3 p-1.5 bg-white rounded-full shadow-sm hover:bg-red-500 hover:text-white transition-colors">
-                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
-                    </button>
-                    <div class="space-y-0.5">
-                        <h3 class="font-bold text-gray-900 text-sm leading-tight">Steakhouse</h3>
-                        <p class="text-[10px] text-gray-500"><i data-lucide="map-pin" class="inline w-2.5 h-2.5"></i> Main St</p>
-                        <p class="text-[10px] font-bold text-red-600 mt-1">Oct 24 • 7 PM</p>
-                    </div>
-                </div>
-
-                <!-- Card 2 -->
-                <div class="event-grid-card bg-gray-900 text-white">
-                    <button class="absolute top-3 right-3 p-1.5 bg-white/10 rounded-full hover:bg-white hover:text-gray-900 transition-colors">
-                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
-                    </button>
-                    <div class="space-y-0.5">
-                        <h3 class="font-bold text-sm leading-tight">Burger Bar</h3>
-                        <p class="text-[10px] text-gray-400"><i data-lucide="map-pin" class="inline w-2.5 h-2.5"></i> Food Court</p>
-                        <p class="text-[10px] font-bold text-red-400 mt-1">Oct 25 • 12 PM</p>
-                    </div>
-                </div>
-
-                <!-- Card 3 -->
-                <div class="event-grid-card border border-gray-200 bg-white">
-                    <button class="absolute top-3 right-3 p-1.5 bg-gray-100 rounded-full hover:bg-red-500 hover:text-white transition-colors">
-                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
-                    </button>
-                    <div class="space-y-0.5">
-                        <h3 class="font-bold text-gray-900 text-sm leading-tight">Sushi Pop-up</h3>
-                        <p class="text-[10px] text-gray-500"><i data-lucide="map-pin" class="inline w-2.5 h-2.5"></i> Terrace</p>
-                        <p class="text-[10px] font-bold text-gray-600 mt-1">Oct 26 • 6 PM</p>
-                    </div>
-                </div>
-
-                <!-- Card 4 -->
-                <div class="event-grid-card bg-gray-50 border border-gray-100">
-                    <button class="absolute top-3 right-3 p-1.5 bg-white rounded-full hover:bg-red-500 hover:text-white transition-colors">
-                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
-                    </button>
-                    <div class="space-y-0.5">
-                        <h3 class="font-bold text-gray-900 text-sm leading-tight">Taco Stand</h3>
-                        <p class="text-[10px] text-gray-500"><i data-lucide="map-pin" class="inline w-2.5 h-2.5"></i> Quad</p>
-                        <p class="text-[10px] font-bold text-gray-600 mt-1">Oct 27 • 1 PM</p>
-                    </div>
-                </div>
-
-                <!-- Card 5 -->
-                <div class="event-grid-card bg-red-600 text-white">
-                    <button class="absolute top-3 right-3 p-1.5 bg-white/20 rounded-full">
-                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
-                    </button>
-                    <div class="space-y-0.5">
-                        <h3 class="font-bold text-sm leading-tight">BBQ Roast</h3>
-                        <p class="text-[10px] text-red-100"><i data-lucide="map-pin" class="inline w-2.5 h-2.5"></i> North Park</p>
-                        <p class="text-[10px] font-bold text-white mt-1">Oct 28 • 5 PM</p>
-                    </div>
-                </div>
-
-                <!-- Card 6 (Placeholder/Empty) -->
-                <div class="event-grid-card border-2 border-dashed border-gray-200 bg-gray-50/50">
-                    <div class="m-auto text-center">
-                        <i data-lucide="plus" class="w-6 h-6 text-gray-300 mx-auto"></i>
-                        <p class="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">Add New</p>
-                    </div>
-                </div>
-            </div>
-
         </main>
 
-        <footer class="p-4 bg-gray-50/50 border-t border-gray-100 text-center">
-            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">PantherOnlyEats Discovery</span>
+        <!-- ===================== FOOTER ===================== -->
+        <footer class="p-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between px-5">
+            <span class="text-[10px] font-bold text-gray-300 uppercase tracking-widest">PantherOnlyEats</span>
+            <span class="text-[11px] font-bold text-white bg-gsu-red px-3 py-1 rounded-full shadow-sm" id="event-count">0</span>
         </footer>
-    </div>
+
+        <!-- ===================== HAMBURGER DRAWER ===================== -->
+        <div id="drawer-overlay" class="hidden fixed inset-0 z-40 drawer-overlay" onclick="toggleDrawer()"></div>
+        <div id="drawer-panel" class="fixed top-0 left-0 z-50 h-full w-72 bg-white shadow-2xl drawer-panel closed flex flex-col">
+            <!-- Drawer header -->
+            <div class="p-5 bg-gsu-blue">
+                <div class="flex items-center justify-between">
+                    <h2 class="font-black text-lg text-white uppercase tracking-tight">POE</h2>
+                    <button onclick="toggleDrawer()" class="p-1 rounded hover:bg-white/20 transition">
+                        <i data-lucide="x" class="w-5 h-5 text-white"></i>
+                    </button>
+                </div>
+                <p class="text-[11px] text-white/60 mt-1">Georgia State University</p>
+            </div>
+            <!-- Nav items -->
+            <nav class="flex-1 py-3">
+                <button onclick="drawerNav('events')" id="nav-events" class="drawer-nav-item active w-full flex items-center gap-3 px-5 py-3 text-sm text-gray-700">
+                    <i data-lucide="utensils" class="w-5 h-5"></i> Events
+                </button>
+                <button onclick="drawerNav('calendar')" id="nav-calendar" class="drawer-nav-item w-full flex items-center gap-3 px-5 py-3 text-sm text-gray-700">
+                    <i data-lucide="calendar-days" class="w-5 h-5"></i> Calendar
+                </button>
+            </nav>
+            <div class="p-5 border-t border-gray-100">
+                <p class="text-[10px] text-gray-300 uppercase tracking-widest font-bold">PantherOnlyEats v1.0</p>
+            </div>
+        </div>
+
+        <!-- ===================== CALENDAR PAGE ===================== -->
+        <div id="calendar-page" class="hidden absolute inset-0 z-20 bg-white flex flex-col">
+            <header class="sticky top-0 bg-white/90 backdrop-blur-lg border-b border-gray-100 px-4 pt-4 pb-3 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <button onclick="toggleDrawer()" class="p-1.5 -ml-1.5 rounded-lg hover:bg-gray-100 transition">
+                        <i data-lucide="menu" class="w-5 h-5 text-gray-700"></i>
+                    </button>
+                    <h2 class="font-bold text-sm text-gray-800 uppercase tracking-wide">Calendar</h2>
+                    <div class="w-8"></div>
+                </div>
+            </header>
+            <div class="flex-1 overflow-y-auto">
+                <!-- Month nav -->
+                <div class="flex items-center justify-between px-5 py-3">
+                    <button onclick="calPrevMonth()" class="p-1.5 rounded-lg hover:bg-gray-100"><i data-lucide="chevron-left" class="w-5 h-5 text-gray-600"></i></button>
+                    <span id="cal-month-label" class="font-bold text-sm text-gray-800"></span>
+                    <button onclick="calNextMonth()" class="p-1.5 rounded-lg hover:bg-gray-100"><i data-lucide="chevron-right" class="w-5 h-5 text-gray-600"></i></button>
+                </div>
+                <!-- Weekday headers -->
+                <div class="grid grid-cols-7 px-4 mb-1">
+                    <div class="text-center text-[10px] font-bold text-gray-400 uppercase py-1">Sun</div>
+                    <div class="text-center text-[10px] font-bold text-gray-400 uppercase py-1">Mon</div>
+                    <div class="text-center text-[10px] font-bold text-gray-400 uppercase py-1">Tue</div>
+                    <div class="text-center text-[10px] font-bold text-gray-400 uppercase py-1">Wed</div>
+                    <div class="text-center text-[10px] font-bold text-gray-400 uppercase py-1">Thu</div>
+                    <div class="text-center text-[10px] font-bold text-gray-400 uppercase py-1">Fri</div>
+                    <div class="text-center text-[10px] font-bold text-gray-400 uppercase py-1">Sat</div>
+                </div>
+                <!-- Calendar grid -->
+                <div id="cal-grid" class="grid grid-cols-7 px-4 gap-1"></div>
+                <!-- Events for selected day -->
+                <div class="px-4 pt-4 pb-6">
+                    <h3 id="cal-day-label" class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3"></h3>
+                    <div id="cal-events" class="space-y-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== FILTER BOTTOM SHEET ===================== -->
+        <div id="sheet-overlay" class="hidden fixed inset-0 z-40 sheet-overlay" onclick="toggleFilterSheet()"></div>
+        <div id="sheet-panel" class="fixed bottom-0 left-0 right-0 z-50 bg-white shadow-2xl sheet-panel closed max-h-[75vh] flex flex-col" style="max-width:28rem; margin:0 auto;">
+            <!-- Handle -->
+            <div class="flex justify-center pt-3 pb-1">
+                <div class="w-10 h-1 bg-gray-300 rounded-full"></div>
+            </div>
+            <!-- Sheet header -->
+            <div class="flex items-center justify-between px-5 pb-3 border-b border-gray-100">
+                <h3 class="font-bold text-sm text-gray-800">Filters</h3>
+                <div class="flex items-center gap-3">
+                    <button onclick="clearAllFilters()" class="text-[11px] font-semibold text-gsu-red">Clear All</button>
+                    <button onclick="toggleFilterSheet()" class="p-1 rounded hover:bg-gray-100">
+                        <i data-lucide="x" class="w-4 h-4 text-gray-500"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- Filter content -->
+            <div class="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+                <!-- DATE FILTER -->
+                <div>
+                    <label class="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2 block">Date</label>
+                    <div id="filter-dates" class="flex flex-wrap gap-2">
+                        <!-- date chips injected by JS -->
+                    </div>
+                </div>
+                <!-- ROOM FILTER -->
+                <div>
+                    <label class="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2 block">Room / Location</label>
+                    <div id="filter-rooms" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                        <!-- room chips injected by JS -->
+                    </div>
+                </div>
+                <!-- TIME FILTER -->
+                <div>
+                    <label class="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2 block">Time of Day</label>
+                    <div id="filter-times" class="flex flex-wrap gap-2">
+                        <!-- time chips injected by JS -->
+                    </div>
+                </div>
+            </div>
+            <!-- Apply -->
+            <div class="px-5 py-4 border-t border-gray-100">
+                <button onclick="applyFilters()" class="w-full py-3 bg-gsu-blue text-white text-sm font-bold rounded-xl hover:bg-gsu-dark transition">
+                    Show Results
+                </button>
+            </div>
+        </div>
+
+    </div><!-- /app -->
+
+    <script src="events_data.js"></script>
 
     <script>
-        // Initialize Icons
-        lucide.createIcons();
+    // =====================================================================
+    //  STATE
+    // =====================================================================
+    const RSVP_BASE = 'https://pin.gsu.edu/event/';
+    let currentView = 'grid';
+    let currentPage = 'events'; // 'events' | 'calendar'
 
-        function toggleMenu() {
-            closeAllPanels();
-            document.getElementById('side-menu').classList.add('open');
-            document.getElementById('overlay').classList.add('open');
-        }
+    // Filter state
+    let filters = { dates: new Set(), rooms: new Set(), times: new Set() };
+    const TIME_SLOTS = [
+        { label: 'Morning',   key: 'morning',   range: [0, 720] },    // 0:00-12:00
+        { label: 'Afternoon', key: 'afternoon', range: [720, 1020] },  // 12:00-17:00
+        { label: 'Evening',   key: 'evening',   range: [1020, 1440] }, // 17:00-24:00
+    ];
 
-        function toggleFilter() {
-            closeAllPanels();
-            document.getElementById('filter-pane').classList.add('open');
-            document.getElementById('overlay').classList.add('open');
-        }
+    // Calendar state
+    let calYear, calMonth, calSelectedDate;
 
-        function closeAllPanels() {
-            document.getElementById('side-menu').classList.remove('open');
-            document.getElementById('filter-pane').classList.remove('open');
-            document.getElementById('overlay').classList.remove('open');
-        }
+    // =====================================================================
+    //  HELPERS
+    // =====================================================================
+    function getEventNumber(id) { return id.replace('evt-', ''); }
+    function getRsvpUrl(id) { return RSVP_BASE + getEventNumber(id); }
 
-        function switchView(viewId) {
-            document.getElementById('view-hero').classList.add('hidden');
-            document.getElementById('view-details').classList.add('hidden');
-            document.getElementById('view-grid').classList.add('hidden');
-            document.getElementById('view-' + viewId).classList.remove('hidden');
+    function fmtDate(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr + 'T00:00:00');
+        return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+    function fmtDateShort(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr + 'T00:00:00');
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+    function getOrganization(desc) {
+        if (!desc) return '';
+        return desc.replace('hosted by ', '');
+    }
+    function parseTime(timeStr) {
+        if (!timeStr) return 9999;
+        const match = timeStr.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)/i);
+        if (!match) return 9999;
+        let hours = parseInt(match[1]);
+        const mins = parseInt(match[2] || '0');
+        const period = match[3].toUpperCase();
+        if (period === 'PM' && hours !== 12) hours += 12;
+        if (period === 'AM' && hours === 12) hours = 0;
+        return hours * 60 + mins;
+    }
+    function sortEvents(events) {
+        return [...events].sort((a, b) => {
+            if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+            return parseTime(a.time) - parseTime(b.time);
+        });
+    }
+    function isLiveNow(ev) {
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        if (ev.date !== today) return false;
+        const evMin = parseTime(ev.time);
+        const nowMin = now.getHours() * 60 + now.getMinutes();
+        return nowMin >= evMin && nowMin <= evMin + 90;
+    }
 
-            document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById('tab-' + viewId).classList.add('active');
-        }
+    function getAllEvents() {
+        return (typeof EVENTS_DATA !== 'undefined') ? EVENTS_DATA : [];
+    }
 
-        function toggleChip(btn) {
-            btn.classList.toggle('active');
-        }
+    function getUniqueDates(events) {
+        const s = new Set();
+        events.forEach(ev => { if (ev.date) s.add(ev.date); });
+        return Array.from(s).sort();
+    }
+    function getUniqueRooms(events) {
+        const s = new Set();
+        events.forEach(ev => { if (ev.location && ev.location !== 'TBD') s.add(ev.location); });
+        return Array.from(s).sort();
+    }
 
-        function handleRSVP(btn, isYes) {
-            const parent = btn.parentElement;
-            const buttons = parent.querySelectorAll('button');
-            if(isYes) {
-                buttons[0].className = "flex-1 bg-green-500 text-white font-black text-lg transition-all";
-                buttons[1].className = "flex-1 bg-white text-gray-200 font-black text-lg";
-                buttons[0].innerText = "GOING";
-            } else {
-                buttons[1].className = "flex-1 bg-gray-800 text-white font-black text-lg transition-all";
-                buttons[0].className = "flex-1 bg-white text-gray-200 font-black text-lg";
-                buttons[1].innerText = "DECLINED";
+    function applyAllFilters(events) {
+        return events.filter(ev => {
+            if (filters.dates.size > 0 && !filters.dates.has(ev.date)) return false;
+            if (filters.rooms.size > 0 && !filters.rooms.has(ev.location)) return false;
+            if (filters.times.size > 0) {
+                const m = parseTime(ev.time);
+                const match = TIME_SLOTS.some(s => filters.times.has(s.key) && m >= s.range[0] && m < s.range[1]);
+                if (!match) return false;
             }
+            return true;
+        });
+    }
+
+    function activeFilterCount() {
+        return filters.dates.size + filters.rooms.size + filters.times.size;
+    }
+
+    // =====================================================================
+    //  DRAWER (hamburger menu)
+    // =====================================================================
+    let drawerOpen = false;
+    function toggleDrawer() {
+        drawerOpen = !drawerOpen;
+        document.getElementById('drawer-overlay').classList.toggle('hidden', !drawerOpen);
+        document.getElementById('drawer-panel').classList.toggle('closed', !drawerOpen);
+    }
+    function drawerNav(page) {
+        currentPage = page;
+        toggleDrawer();
+        document.querySelectorAll('.drawer-nav-item').forEach(el => el.classList.remove('active'));
+        document.getElementById('nav-' + page).classList.add('active');
+
+        if (page === 'calendar') {
+            document.getElementById('calendar-page').classList.remove('hidden');
+            initCalendar();
+        } else {
+            document.getElementById('calendar-page').classList.add('hidden');
         }
+        lucide.createIcons();
+    }
+
+    // =====================================================================
+    //  FILTER BOTTOM SHEET
+    // =====================================================================
+    let sheetOpen = false;
+    function toggleFilterSheet() {
+        sheetOpen = !sheetOpen;
+        document.getElementById('sheet-overlay').classList.toggle('hidden', !sheetOpen);
+        document.getElementById('sheet-panel').classList.toggle('closed', !sheetOpen);
+        if (sheetOpen) renderFilterSheet();
+        lucide.createIcons();
+    }
+
+    function renderFilterSheet() {
+        const events = getAllEvents();
+
+        // Dates
+        const dates = getUniqueDates(events);
+        document.getElementById('filter-dates').innerHTML = dates.map(d => `
+            <button onclick="toggleFilter('dates','${d}')" class="filter-chip text-[11px] font-semibold px-3 py-1.5 rounded-full border border-gray-200 bg-white ${filters.dates.has(d) ? 'active' : ''}">
+                ${fmtDateShort(d)}
+            </button>`).join('');
+
+        // Rooms
+        const rooms = getUniqueRooms(events);
+        document.getElementById('filter-rooms').innerHTML = rooms.map(r => {
+            const esc = r.replace(/'/g, "\\'");
+            return `
+            <button onclick="toggleFilter('rooms','${esc}')" class="filter-chip text-[11px] font-semibold px-3 py-1.5 rounded-full border border-gray-200 bg-white whitespace-nowrap ${filters.rooms.has(r) ? 'active' : ''}">
+                ${r}
+            </button>`;
+        }).join('');
+
+        // Times
+        document.getElementById('filter-times').innerHTML = TIME_SLOTS.map(s => `
+            <button onclick="toggleFilter('times','${s.key}')" class="filter-chip text-[11px] font-semibold px-3 py-1.5 rounded-full border border-gray-200 bg-white ${filters.times.has(s.key) ? 'active' : ''}">
+                ${s.label}
+            </button>`).join('');
+    }
+
+    function toggleFilter(category, value) {
+        if (filters[category].has(value)) {
+            filters[category].delete(value);
+        } else {
+            filters[category].add(value);
+        }
+        renderFilterSheet();
+    }
+
+    function clearAllFilters() {
+        filters.dates.clear();
+        filters.rooms.clear();
+        filters.times.clear();
+        renderFilterSheet();
+        renderAll();
+    }
+
+    function applyFilters() {
+        toggleFilterSheet();
+        renderAll();
+    }
+
+    function renderActiveFiltersBar() {
+        const count = activeFilterCount();
+        const badge = document.getElementById('filter-badge');
+        const bar = document.getElementById('active-filters-bar');
+
+        if (count === 0) {
+            badge.classList.add('hidden');
+            bar.classList.add('hidden');
+            return;
+        }
+
+        badge.classList.remove('hidden');
+        badge.textContent = count;
+        bar.classList.remove('hidden');
+
+        let pills = '';
+        filters.dates.forEach(d => {
+            pills += `<span class="shrink-0 inline-flex items-center gap-1 text-[10px] font-semibold bg-gsu-blue text-white px-2.5 py-1 rounded-full">
+                ${fmtDateShort(d)}
+                <button onclick="removeFilter('dates','${d}')" class="hover:opacity-70">&times;</button>
+            </span>`;
+        });
+        filters.rooms.forEach(r => {
+            const esc = r.replace(/'/g, "\\'");
+            pills += `<span class="shrink-0 inline-flex items-center gap-1 text-[10px] font-semibold bg-gsu-blue text-white px-2.5 py-1 rounded-full">
+                ${r}
+                <button onclick="removeFilter('rooms','${esc}')" class="hover:opacity-70">&times;</button>
+            </span>`;
+        });
+        filters.times.forEach(t => {
+            const label = TIME_SLOTS.find(s => s.key === t)?.label || t;
+            pills += `<span class="shrink-0 inline-flex items-center gap-1 text-[10px] font-semibold bg-gsu-blue text-white px-2.5 py-1 rounded-full">
+                ${label}
+                <button onclick="removeFilter('times','${t}')" class="hover:opacity-70">&times;</button>
+            </span>`;
+        });
+        pills += `<button onclick="clearAllFilters()" class="shrink-0 text-[10px] font-bold text-gsu-red">Clear</button>`;
+        bar.innerHTML = pills;
+    }
+
+    function removeFilter(category, value) {
+        filters[category].delete(value);
+        renderAll();
+    }
+
+    // =====================================================================
+    //  CALENDAR
+    // =====================================================================
+    function initCalendar() {
+        const now = new Date();
+        calYear = now.getFullYear();
+        calMonth = now.getMonth();
+        calSelectedDate = now.toISOString().split('T')[0];
+        renderCalendar();
+    }
+    function calPrevMonth() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); }
+    function calNextMonth() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); }
+
+    function renderCalendar() {
+        const events = sortEvents(getAllEvents());
+        const eventDates = new Set(events.map(e => e.date));
+
+        const label = new Date(calYear, calMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        document.getElementById('cal-month-label').textContent = label;
+
+        const firstDay = new Date(calYear, calMonth, 1).getDay();
+        const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        let html = '';
+        // Empty cells before 1st
+        for (let i = 0; i < firstDay; i++) {
+            html += '<div></div>';
+        }
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const isToday = dateStr === todayStr;
+            const isSelected = dateStr === calSelectedDate;
+            const hasEv = eventDates.has(dateStr);
+            html += `
+            <button onclick="calSelectDate('${dateStr}')"
+                    class="cal-day w-full aspect-square rounded-xl flex items-center justify-center text-xs font-semibold text-gray-700
+                           ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${hasEv ? 'has-events' : ''}">
+                ${d}
+            </button>`;
+        }
+        document.getElementById('cal-grid').innerHTML = html;
+
+        // Render events for selected date
+        renderCalendarEvents(events);
+    }
+
+    function calSelectDate(dateStr) {
+        calSelectedDate = dateStr;
+        renderCalendar();
+    }
+
+    function renderCalendarEvents(events) {
+        const dayEvents = events.filter(ev => ev.date === calSelectedDate);
+        const labelEl = document.getElementById('cal-day-label');
+        const listEl = document.getElementById('cal-events');
+
+        if (!calSelectedDate) {
+            labelEl.textContent = '';
+            listEl.innerHTML = '';
+            return;
+        }
+
+        labelEl.textContent = fmtDate(calSelectedDate) + ` (${dayEvents.length} event${dayEvents.length !== 1 ? 's' : ''})`;
+
+        if (dayEvents.length === 0) {
+            listEl.innerHTML = '<p class="text-xs text-gray-400 text-center py-6">No free food events this day</p>';
+            return;
+        }
+
+        listEl.innerHTML = dayEvents.map(ev => buildListCard(ev)).join('');
+        lucide.createIcons();
+    }
+
+    // =====================================================================
+    //  CARD BUILDERS
+    // =====================================================================
+    function buildFeaturedCard(ev, isHero) {
+        const org = getOrganization(ev.description);
+        const rsvpUrl = getRsvpUrl(ev.id);
+        const hasImage = ev.imageUrl && ev.imageUrl.length > 0;
+        const live = isLiveNow(ev);
+        const heightClass = isHero ? 'h-full min-h-[260px]' : 'h-full min-h-[120px]';
+        const titleSize = isHero ? 'text-base' : 'text-xs';
+        const orgSize = isHero ? 'text-xs' : 'text-[10px]';
+
+        return `
+        <a href="${rsvpUrl}" target="_blank" rel="noopener"
+           class="${isHero ? 'featured-hero bento-hero' : 'event-card'} block rounded-2xl overflow-hidden relative ${heightClass}">
+            ${hasImage
+                ? `<img src="${ev.imageUrl}" alt="" class="absolute inset-0 w-full h-full object-cover" loading="lazy"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                   <div class="absolute inset-0 bg-gradient-to-br from-gsu-blue to-gsu-light items-center justify-center" style="display:none">
+                       <i data-lucide="utensils" class="w-8 h-8 text-white/40"></i>
+                   </div>`
+                : `<div class="absolute inset-0 bg-gradient-to-br from-gsu-blue to-gsu-light flex items-center justify-center">
+                       <i data-lucide="utensils" class="w-8 h-8 text-white/40"></i>
+                   </div>`}
+            <div class="absolute inset-0 glass-overlay"></div>
+            <div class="absolute top-2 left-2">
+                <span class="free-food-badge inline-flex items-center text-[9px] font-bold text-white px-2 py-0.5 rounded-full uppercase tracking-wide">Free Food</span>
+            </div>
+            ${live ? `<div class="absolute top-2 right-2"><span class="inline-flex items-center gap-1 bg-gsu-red/90 backdrop-blur text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide shadow-lg"><span class="w-1.5 h-1.5 bg-white rounded-full pulse-dot"></span>Live</span></div>` : ''}
+            <div class="absolute bottom-0 left-0 right-0 p-3">
+                <h3 class="${titleSize} font-bold text-white leading-tight ${isHero ? 'line-clamp-2' : 'line-clamp-1'}">${ev.title}</h3>
+                ${org ? `<p class="${orgSize} text-white/70 mt-0.5 line-clamp-1">${org}</p>` : ''}
+                ${isHero ? `<div class="flex items-center gap-3 mt-2 text-white/60 text-[10px]">
+                    <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i>${ev.time || 'TBD'}</span>
+                    <span class="flex items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3"></i>${ev.location}</span>
+                </div>` : ''}
+            </div>
+        </a>`;
+    }
+
+    function buildGridCard(ev) {
+        const org = getOrganization(ev.description);
+        const rsvpUrl = getRsvpUrl(ev.id);
+        const hasImage = ev.imageUrl && ev.imageUrl.length > 0;
+        const live = isLiveNow(ev);
+        return `
+        <a href="${rsvpUrl}" target="_blank" rel="noopener"
+           class="event-card block rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm">
+            <div class="h-28 relative overflow-hidden bg-gray-100">
+                ${hasImage
+                    ? `<img src="${ev.imageUrl}" alt="" class="w-full h-full object-cover" loading="lazy"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                       <div class="absolute inset-0 bg-gsu-pale items-center justify-center" style="display:none"><i data-lucide="utensils" class="w-7 h-7 text-gsu-blue"></i></div>`
+                    : `<div class="w-full h-full bg-gsu-pale flex items-center justify-center"><i data-lucide="utensils" class="w-7 h-7 text-gsu-blue"></i></div>`}
+                <div class="absolute top-2 left-2"><span class="free-food-badge inline-flex text-[8px] font-bold text-white px-1.5 py-0.5 rounded-full uppercase tracking-wide">Free Food</span></div>
+                ${live ? `<div class="absolute top-2 right-2"><span class="inline-flex items-center gap-1 bg-gsu-red text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full"><span class="w-1 h-1 bg-white rounded-full pulse-dot"></span>Live</span></div>` : ''}
+            </div>
+            <div class="p-3 space-y-1">
+                <h3 class="font-bold text-[13px] leading-tight text-gray-900 line-clamp-2">${ev.title}</h3>
+                <div class="flex items-center gap-1 text-[10px] text-gray-400"><i data-lucide="calendar" class="w-3 h-3 shrink-0"></i><span>${fmtDate(ev.date)}</span></div>
+                <div class="flex items-center gap-1 text-[10px] text-gray-400"><i data-lucide="clock" class="w-3 h-3 shrink-0"></i><span>${ev.time || 'TBD'}</span></div>
+                <div class="flex items-center gap-1 text-[10px] text-gray-400"><i data-lucide="map-pin" class="w-3 h-3 shrink-0"></i><span class="truncate">${ev.location}</span></div>
+                ${org ? `<p class="text-[10px] text-gsu-blue font-semibold truncate">${org}</p>` : ''}
+                <div class="pt-1"><span class="inline-block text-[9px] font-bold text-white bg-gsu-blue px-2.5 py-1 rounded-full uppercase tracking-wider">RSVP</span></div>
+            </div>
+        </a>`;
+    }
+
+    function buildListCard(ev) {
+        const org = getOrganization(ev.description);
+        const rsvpUrl = getRsvpUrl(ev.id);
+        const hasImage = ev.imageUrl && ev.imageUrl.length > 0;
+        const live = isLiveNow(ev);
+        return `
+        <a href="${rsvpUrl}" target="_blank" rel="noopener"
+           class="event-card flex bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+            <div class="w-24 shrink-0 relative overflow-hidden bg-gray-100">
+                ${hasImage
+                    ? `<img src="${ev.imageUrl}" alt="" class="w-full h-full object-cover" loading="lazy"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                       <div class="absolute inset-0 bg-gsu-pale items-center justify-center" style="display:none"><i data-lucide="utensils" class="w-5 h-5 text-gsu-blue"></i></div>`
+                    : `<div class="w-full h-full bg-gsu-pale flex items-center justify-center"><i data-lucide="utensils" class="w-5 h-5 text-gsu-blue"></i></div>`}
+                <div class="absolute top-1.5 left-1.5"><span class="free-food-badge inline-flex text-[7px] font-bold text-white px-1.5 py-0.5 rounded-full uppercase">Free</span></div>
+                ${live ? `<div class="absolute bottom-1.5 left-1.5"><span class="inline-flex items-center gap-0.5 bg-gsu-red text-white text-[7px] font-bold px-1.5 py-0.5 rounded-full"><span class="w-1 h-1 bg-white rounded-full pulse-dot"></span>Live</span></div>` : ''}
+            </div>
+            <div class="flex-1 p-3 min-w-0 flex flex-col justify-center space-y-1">
+                <h3 class="font-bold text-[13px] leading-tight text-gray-900 line-clamp-2">${ev.title}</h3>
+                <div class="flex items-center gap-3 text-[10px] text-gray-400">
+                    <span class="flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i>${fmtDate(ev.date)}</span>
+                    <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i>${ev.time || 'TBD'}</span>
+                </div>
+                <div class="flex items-center gap-1 text-[10px] text-gray-400"><i data-lucide="map-pin" class="w-3 h-3 shrink-0"></i><span class="truncate">${ev.location}</span></div>
+                ${org ? `<p class="text-[10px] text-gsu-blue font-semibold truncate">${org}</p>` : ''}
+                <span class="inline-block self-start text-[9px] font-bold text-white bg-gsu-blue px-2.5 py-1 rounded-full uppercase tracking-wider">RSVP</span>
+            </div>
+        </a>`;
+    }
+
+    // =====================================================================
+    //  VIEW RENDERERS
+    // =====================================================================
+    function renderGridView(events) {
+        const container = document.getElementById('view-grid');
+        if (events.length === 0) { container.innerHTML = ''; return; }
+        const featured = events.slice(0, 5);
+        const rest = events.slice(5);
+        let html = '';
+        if (featured.length > 0) {
+            html += `<div class="mb-4">
+                <h2 class="text-sm font-extrabold text-gray-800 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <i data-lucide="flame" class="w-4 h-4 text-gsu-red"></i> Featured Events
+                </h2>
+                <div class="bento-grid stagger">${featured.map((ev, i) => buildFeaturedCard(ev, i === 0)).join('')}</div>
+            </div>`;
+        }
+        if (rest.length > 0) {
+            html += `<div>
+                <h2 class="text-sm font-extrabold text-gray-800 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <i data-lucide="calendar" class="w-4 h-4 text-gsu-blue"></i> All Events
+                </h2>
+                <div class="grid grid-cols-2 gap-3 stagger">${rest.map(ev => buildGridCard(ev)).join('')}</div>
+            </div>`;
+        }
+        container.innerHTML = html;
+    }
+
+    function renderTabView(events) {
+        const container = document.getElementById('view-tab');
+        if (events.length === 0) { container.innerHTML = ''; return; }
+        container.innerHTML = `<div class="space-y-3 stagger">${events.map(ev => buildListCard(ev)).join('')}</div>`;
+    }
+
+    // =====================================================================
+    //  VIEW SWITCHING
+    // =====================================================================
+    function switchView(viewId) {
+        currentView = viewId;
+        document.getElementById('view-grid').classList.toggle('hidden', viewId !== 'grid');
+        document.getElementById('view-tab').classList.toggle('hidden', viewId !== 'tab');
+        document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('tab-' + viewId).classList.add('active');
+    }
+
+    // =====================================================================
+    //  MAIN RENDER
+    // =====================================================================
+    function renderAll() {
+        const all = sortEvents(getAllEvents());
+        const filtered = applyAllFilters(all);
+
+        renderActiveFiltersBar();
+
+        document.getElementById('event-count').textContent = filtered.length + ' event' + (filtered.length !== 1 ? 's' : '');
+
+        if (filtered.length === 0) {
+            document.getElementById('empty-state').classList.remove('hidden');
+            document.getElementById('view-grid').innerHTML = '';
+            document.getElementById('view-tab').innerHTML = '';
+        } else {
+            document.getElementById('empty-state').classList.add('hidden');
+            renderGridView(filtered);
+            renderTabView(filtered);
+        }
+        lucide.createIcons();
+    }
+
+    // =====================================================================
+    //  BOOT
+    // =====================================================================
+    lucide.createIcons();
+    renderAll();
     </script>
 </body>
 </html>
-
